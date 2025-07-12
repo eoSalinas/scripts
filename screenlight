@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+# Adjust brightness and send notification using brightnessctl and dunstify
+
+# Function to get current brightness as an integer (in percentage)
+get_brightness() {
+    # Detect the backlight device
+    local backlight_device
+    backlight_device=$(ls /sys/class/backlight/ | head -n 1)  # Get the first device found
+
+    # If no backlight device is found, exit with error
+    if [ -z "$backlight_device" ]; then
+        echo "No backlight device found"
+        exit 1
+    fi
+
+    # Get current and max brightness values from the selected device
+    local current_brightness max_brightness
+    current_brightness=$(cat /sys/class/backlight/$backlight_device/brightness)
+    max_brightness=$(cat /sys/class/backlight/$backlight_device/max_brightness)
+
+    # Calculate brightness percentage
+    echo $((current_brightness * 100 / max_brightness))  # Calculate percentage
+}
+
+
+# Send notification
+send_notification() {
+    local brightness=$(get_brightness)
+    dunstify -a "Brightness" -r 9994 "Brightness: ${brightness}%" -h int:value:"$brightness" -t 1000
+}
+
+# Perform brightness action
+case "$1" in
+    up)
+        brightnessctl s +10%  # Increase brightness by 10%
+        ;;
+    down)
+        brightnessctl s 10%-  # Decrease brightness by 10%
+        ;;
+    *)
+        echo "Usage: $0 {up|down}"
+        exit 1
+        ;;
+esac
+
+# Notify the user
+send_notification
+

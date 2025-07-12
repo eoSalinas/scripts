@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+# Adjust volume and send notification using wpctl and dunstify
+
+# Function to get current volume as an integer
+get_volume() {
+	wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{print int($2 * 100)}'
+}
+
+# Function to check if muted
+is_muted() {
+	wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -q MUTED
+}
+
+# Send notification
+send_notification() {
+	if is_muted; then
+		dunstify -a "Volume" -r 9993 "Muted" -t 1000
+	else
+		local vol=$(get_volume)
+		dunstify -a "Volume" -r 9993 "Volume: ${vol}%" -h int:value:"$vol" -t 1000
+	fi
+}
+
+# Perform volume action
+case "$1" in
+	up)
+		wpctl set-mute @DEFAULT_AUDIO_SINK@ 0
+		wpctl set-volume -l 2.0 @DEFAULT_AUDIO_SINK@ 5%+
+		;;
+	down)
+		wpctl set-mute @DEFAULT_AUDIO_SINK@ 0
+		wpctl set-volume -l 2.0 @DEFAULT_AUDIO_SINK@ 5%-
+		;;
+	mute)
+		wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+		;;
+	*)
+		echo "Usage: $0 {up|down|mute}"
+		exit 1
+		;;
+esac
+
+# Notify the user
+send_notification
+

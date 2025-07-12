@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+# Set thresholds for battery levels
+WARNING_LEVEL=20
+CRITICAL_LEVEL=5
+
+# Check battery status
+BATTERY_DISCHARGING_RAW=$(acpi -b | grep "Battery 0" | grep -c "Discharging")
+BATTERY_LEVEL_RAW=$(acpi -b | grep "Battery 0" | grep -P -o '[0-9]+(?=%)')
+
+# File paths to track notifications
+FULL_FILE=/tmp/batteryfull
+EMPTY_FILE=/tmp/batteryempty
+CRITICAL_FILE=/tmp/batterycritical
+
+send_notification() {
+    # Send a notification when the battery is below the threshold
+    if [ "$BATTERY_LEVEL_RAW" -le "$WARNING_LEVEL" ] && [ "$BATTERY_DISCHARGING_RAW" -eq 1 ] && [ ! -f $EMPTY_FILE ]; then
+        dunstify -a "Battery Monitor" -r 1001 -u critical "Low Battery: ${BATTERY_LEVEL_RAW}% remaining."
+        touch $EMPTY_FILE  # Mark that the notification has been sent
+    fi
+
+    # Critical notification if the battery is extremely low
+    if [ "$BATTERY_LEVEL_RAW" -le "$CRITICAL_LEVEL" ] && [ "$BATTERY_DISCHARGING_RAW" -eq 1 ] && [ ! -f $CRITICAL_FILE ]; then
+        dunstify -a "Battery Monitor" -r 1002 -u critical "Battery Critical: ${BATTERY_LEVEL_RAW}% remaining. The system will shut down soon!"
+        touch $CRITICAL_FILE  # Mark that the critical notification has been sent
+    fi
+
+    # Full charge notification
+    if [ "$BATTERY_LEVEL_RAW" -ge 99 ] && [ "$BATTERY_DISCHARGING_RAW" -eq 0 ] && [ ! -f $FULL_FILE ]; then
+        dunstify -a "Battery Monitor" -r 1003 -u normal "Battery is fully charged." -t 0
+        touch $FULL_FILE  # Mark that the full battery notification has been sent
+    fi
+}
+
+# Reset notifications if charging or discharging state changes
+if [ "$BATTERY_DISCHARGING_RAW" -eq 1 ] && [ -f $FULL_FILE ]; then
+    rm $FULL_FILE  # Battery is discharging, so reset "full charge" notification
+elif [ "$BATTERY_DISCHARGING_RAW" -eq 0 ] && [ -f $EMPTY_FILE ]; then
+    rm $EMPTY_FILE  # Battery is charging, so reset "low battery" notification
+elif [ "$BATTERY_DISCHARGING_RAW" -eq 0 ] && [ -f $CRITICAL_FILE ]; then
+    rm $CRITICAL_FILE  # Battery is charging, so reset "critical battery" notification
+fi
+
+
+# Send to bar and notify user if battery is low
+echo "$BATTERY_LEVEL_RAW%"
+send_notification
+
