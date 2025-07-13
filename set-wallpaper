@@ -3,7 +3,7 @@
 # slightly scuffed wallpaper picker menu for use with pywal - uses nsxiv if installed, otherwise uses dmenu
 
 FOLDER="$HOME/wallpapers/" # wallpaper folder
-SCRIPT="$HOME/scripts/pywal16" # script to run after wal for refreshing programs, etc.
+SCRIPT="$XDG_CONFIG_HOME/scripts/pywal16" # script to run after wal for refreshing programs, etc.
 
 
 menu() {
