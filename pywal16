@@ -4,4 +4,3 @@ ln -sf $XDG_CACHE_HOME/wal/colors.Xresources $XDG_CONFIG_HOME/x11/xresources
 cat $XDG_CONFIG_HOME/x11/xresources $XDG_CACHE_HOME/wal/xrdb_extra | xrdb -merge
 xdotool key super+F5 # xrdb refresh keybind
 
-notify-send "New wallpaper just dropped"
