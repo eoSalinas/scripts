@@ -42,8 +42,11 @@ elif [ "$BATTERY_DISCHARGING_RAW" -eq 0 ] && [ -f $CRITICAL_FILE ]; then
     rm $CRITICAL_FILE  # Battery is charging, so reset "critical battery" notification
 fi
 
-
 # Send to bar and notify user if battery is low
-echo "$BATTERY_LEVEL_RAW%"
+if [ "$BATTERY_DISCHARGING_RAW" -eq 0 ]; then
+    echo "$BATTERY_LEVEL_RAW% 󱐋"
+else
+    echo "$BATTERY_LEVEL_RAW%"
+fi
 send_notification
 
